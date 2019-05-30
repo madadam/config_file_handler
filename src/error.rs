@@ -15,9 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use quick_error::quick_error;
 use serde_json::Error as JsonError;
-use std::env::VarError;
-use std::io::Error as IoError;
+use std::{env::VarError, io::Error as IoError};
 
 quick_error! {
     /// Error types.

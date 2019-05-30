@@ -19,7 +19,7 @@
 // creation/deletion can only be protected by a global mutex if multiple threads are going for such
 // operations.
 
-use std::sync::{Mutex, ONCE_INIT, Once};
+use std::sync::{Mutex, Once, ONCE_INIT};
 
 pub type GlobalMutex = Mutex<()>;
 
