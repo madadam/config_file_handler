@@ -19,20 +19,15 @@
 // creation/deletion can only be protected by a global mutex if multiple threads are going for such
 // operations.
 
-use std::sync::{Mutex, Once, ONCE_INIT};
+use lazy_static::lazy_static;
+use std::sync::Mutex;
 
 pub type GlobalMutex = Mutex<()>;
 
-#[allow(unsafe_code)]
-pub fn get_mutex<'a>() -> &'a GlobalMutex {
-    static mut GLOBAL_MUTEX: *const GlobalMutex = 0 as *const GlobalMutex;
-    static ONCE: Once = ONCE_INIT;
+lazy_static! {
+    static ref GLOBAL_MUTEX: GlobalMutex = GlobalMutex::new(());
+}
 
-    unsafe {
-        ONCE.call_once(|| {
-            GLOBAL_MUTEX = Box::into_raw(Box::new(GlobalMutex::new(())));
-        });
-
-        &*GLOBAL_MUTEX
-    }
+pub fn get_mutex() -> &'static GlobalMutex {
+    &*GLOBAL_MUTEX
 }
