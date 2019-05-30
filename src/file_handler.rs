@@ -16,6 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use crate::{error::Error, global_mutex};
+use dirs;
 use fs2::FileExt;
 use lazy_static::lazy_static;
 use serde::{de::DeserializeOwned, Serialize};
@@ -412,60 +413,14 @@ pub fn bundle_resource_dir() -> Result<PathBuf, Error> {
 /// config file flowchart][1].
 ///
 /// [1]: https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf
-#[cfg(windows)]
 pub fn user_app_dir() -> Result<PathBuf, Error> {
-    let path = env::var("APPDATA")?;
-    let app_dir = Path::new(&path);
+    let dir = dirs::config_dir()
+        .filter(|dir| dir.is_dir())
+        .ok_or_else(|| {
+            io::Error::new(io::ErrorKind::NotFound, "App support directory not found.")
+        })?;
 
-    if app_dir.is_dir() {
-        Ok(join_exe_file_stem(app_dir)?)
-    } else {
-        Err(Error::Io(io::Error::new(
-            io::ErrorKind::NotFound,
-            "Global user app directory not found.",
-        )))
-    }
-}
-
-/// The full path to an application support directory for the current user.  See also [an example
-/// config file flowchart][1].
-///
-/// [1]: https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf
-#[cfg(all(unix, not(target_os = "macos")))]
-pub fn user_app_dir() -> Result<PathBuf, Error> {
-    #[allow(deprecated)]
-    let mut home_dir = env::home_dir()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Home directory not found."))?;
-    home_dir.push(".config");
-
-    if home_dir.is_dir() {
-        Ok(join_exe_file_stem(&home_dir)?)
-    } else {
-        Err(Error::Io(io::Error::new(
-            io::ErrorKind::NotFound,
-            "Global user app directory not found.",
-        )))
-    }
-}
-
-/// The full path to an application support directory for the current user.  See also [an example
-/// config file flowchart][1].
-///
-/// [1]: https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf
-#[cfg(target_os = "macos")]
-pub fn user_app_dir() -> Result<PathBuf, Error> {
-    let mut app_dir = env::home_dir()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "Home directory not found."))?;
-    app_dir.push("Library/Application Support");
-
-    if app_dir.is_dir() {
-        Ok(join_exe_file_stem(&app_dir)?)
-    } else {
-        Err(Error::Io(io::Error::new(
-            io::ErrorKind::NotFound,
-            "Global user app directory not found.",
-        )))
-    }
+    join_exe_file_stem(&dir)
 }
 
 /// The full path to a system cache directory available for all users. See also [an example config
@@ -478,7 +433,7 @@ pub fn system_cache_dir() -> Result<PathBuf, Error> {
     let sys_cache_dir = Path::new(&path);
 
     if sys_cache_dir.is_dir() {
-        Ok(join_exe_file_stem(sys_cache_dir)?)
+        join_exe_file_stem(sys_cache_dir)
     } else {
         Err(Error::Io(io::Error::new(
             io::ErrorKind::NotFound,
@@ -496,7 +451,7 @@ pub fn system_cache_dir() -> Result<PathBuf, Error> {
     let sys_cache_dir = Path::new("/var/cache");
 
     if sys_cache_dir.is_dir() {
-        Ok(join_exe_file_stem(sys_cache_dir)?)
+        join_exe_file_stem(sys_cache_dir)
     } else {
         Err(Error::Io(io::Error::new(
             io::ErrorKind::NotFound,
@@ -514,7 +469,7 @@ pub fn system_cache_dir() -> Result<PathBuf, Error> {
     let sys_cache_dir = Path::new("/Library/Application Support");
 
     if sys_cache_dir.is_dir() {
-        Ok(join_exe_file_stem(&sys_cache_dir)?)
+        join_exe_file_stem(&sys_cache_dir)
     } else {
         Err(Error::Io(io::Error::new(
             io::ErrorKind::NotFound,
